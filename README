@@ -1,0 +1,101 @@
+NAME
+    Lingua::JA::WebIDF - WebIDF calculator
+
+SYNOPSIS
+      use Lingua::JA::WebIDF;
+
+      my $webidf = Lingua::JA::WebIDF->new
+      (
+          api       => 'Bing',
+          appid     => $appid,
+          fetch_df  => 1,
+          Furl_HTTP => { timeout => 3 }
+      );
+
+      print $webidf->idf("東京"); # low
+      print $webidf->idf("スリジャヤワルダナプラコッテ"); # high
+
+DESCRIPTION
+    Lingua::JA::WebIDF calculates WebIDF scores.
+
+    WebIDF(Inverse Document Frequency) scores represent the rarity of words
+    on the Web. The WebIDF scores of rare words are high. Conversely, the
+    WebIDF scores of common words are low.
+
+METHOD
+  new( %config || \%config )
+    Creates a new Lingua::JA::WebIDF instance.
+
+    The following configuration is used if you don't set %config.
+
+      KEY                 DEFAULT VALUE
+      -----------         ---------------
+      api                 'Bing'
+      appid               undef
+      driver              'Storable'
+      df_file             undef
+      fetch_df            1
+      expires_in          365
+      documents           250_0000_0000
+      default_df          5000
+      Furl_HTTP           undef
+
+    api => 'Bing' || 'Yahoo' || 'YahooPremium'
+        Uses the specified Web API when fetches WebDF(Document Frequency)
+        scores from the Web.
+
+    driver => 'Storable' || 'TokyoCabinet'
+        Fetches and saves WebDF scores with the specified driver.
+
+    df_file => $path
+        Saves WebDF scores to the specified path.
+
+        If undef is specified, 'bing_utf8.st' is used. This file is located
+        in 'Lingua/JA/WebIDF/' and contains the WebDF scores of about 60000
+        words. There are other format files in the 'df' directory of this
+        library.
+
+        I recommend that you change the file depending on the type of Web
+        API you specifies because WebDF may be different depending on it.
+
+    fech_df => 0
+        Doesn't fetch WebDF scores. (If 0 is specified.)
+
+        If the WebDF score you want to know is already saved, it is used.
+        Otherwise, the value of default_df is used.
+
+    expires_in => $days
+        If 365 is specified, a WebDF score expires in 365 days after fetches
+        it.
+
+    Furl_HTTP => \%option
+        Sets the options of Furl::HTTP->new.
+
+        If you want to use proxy server, you have to use this option.
+
+  idf($word)
+    Calculates the WebIDF score of $word.
+
+    If the WebDF score of $word is not saved or is expired, fetches it by
+    using the Web API you specified and saves it.
+
+  df($word)
+    Fetches the WebDF score of $word.
+
+    If the WebDF score of $word is not saved or is expired, fetches it by
+    using the Web API you specified and saves it.
+
+AUTHOR
+    pawa <pawapawa@cpan.org>
+
+SEE ALSO
+    Lingua::JA::TFIDF
+
+    <http://www.bing.com/toolbox/bingdeveloper/>
+
+    <http://developer.yahoo.co.jp/>
+
+LICENSE
+    This library is free software; you can redistribute it and/or modify it
+    under the same terms as Perl itself.
+
