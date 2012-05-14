@@ -1,4 +1,8 @@
 Revision history for Perl extension Lingua::JA::WebIDF
 
-0.01 Mon, 14 May 2012 09:36:32 +0900
-- original version
+0.02    Mon, 14 May 2012 17:53:17 +0900
+        - improved pluggability
+        - added link to Tokyo Cabinet in documentation
+
+0.01    Mon, 14 May 2012 09:36:32 +0900
+        - original version

@@ -47,13 +47,8 @@ my @patterns = (
 
 test_tcp(
     client => sub {
-        my $port = shift;
 
-        local %Lingua::JA::WebIDF::API_URL = (
-            Bing         => "http://127.0.0.1:$port/bing/",
-            Yahoo        => "http://127.0.0.1:$port/yahoo/",
-            YahooPremium => "http://127.0.0.1:$port/yahoo_premium/",
-        );
+        my $port = shift;
 
         my $default_df = 1_0000;
 
@@ -79,6 +74,13 @@ test_tcp(
                 }
 
                 my $webidf = Lingua::JA::WebIDF->new(%config);
+
+                {
+                    no warnings 'once';
+                    $Lingua::JA::WebIDF::API::Bing::BASE_URL         = "http://127.0.0.1:$port/bing/";
+                    $Lingua::JA::WebIDF::API::Yahoo::BASE_URL        = "http://127.0.0.1:$port/yahoo/";
+                    $Lingua::JA::WebIDF::API::YahooPremium::BASE_URL = "http://127.0.0.1:$port/yahoo_premium/";
+                }
 
                 my $query = exists $pattern->{query} ? $pattern->{query} : 'オコジョ';
 

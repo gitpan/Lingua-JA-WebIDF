@@ -8,16 +8,11 @@ use Carp ();
 use Module::Load ();
 use Furl::HTTP;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
-our %API_URL = (
-    Bing         => 'http://api.bing.net/json.aspx',
-    Yahoo        => 'http://search.yahooapis.jp/WebSearchService/V2/webSearch',
-    YahooPremium => 'http://search.yahooapis.jp/PremiumWebSearchService/V1/webSearch',
-);
+my @SUPPORTED_API    = _plugin_list('API');
+my @SUPPORTED_DRIVER = _plugin_list('Driver');
 
-my @SUPPORTED_API    = keys %API_URL;
-my @SUPPORTED_DRIVER = qw/Storable TokyoCabinet/;
 
 sub _options
 {
@@ -153,7 +148,26 @@ sub _fetch_new_df
 
     no strict 'refs';
     my $api = __PACKAGE__ . '::API::' . $self->{api};
-    &{$api . '::fetch_new_df'}( $self, $word, $API_URL{ $self->{api} } );
+    &{$api . '::fetch_new_df'}($self, $word);
+}
+
+sub _plugin_list
+{
+    my $type = shift;
+
+    my $path = $INC{ join( '/', split('::', __PACKAGE__) ) . '.pm' };
+    $path =~ s/\.pm$//;
+
+    my $dir = "$path/$type/";
+
+    opendir(my $dh, $dir) or Carp::croak("Can't open $dir: $!");
+    my @contents = readdir $dh;
+    closedir($dh);
+
+    my @plugins
+        =  map { my $file = $_; $file =~ s/\.pm$//; $file; } grep { /\.pm$/ } @contents;
+
+    return @plugins;
 }
 
 1;
@@ -279,6 +293,7 @@ L<http://www.bing.com/toolbox/bingdeveloper/>
 
 L<http://developer.yahoo.co.jp/>
 
+L<http://fallabs.com/tokyocabinet/>
 
 =head1 LICENSE
 

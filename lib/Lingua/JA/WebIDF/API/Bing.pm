@@ -8,16 +8,19 @@ use Carp ();
 use URI;
 use JSON ();
 
+our $BASE_URL = 'http://api.bing.net/json.aspx';
+
+
 sub fetch_new_df
 {
-    my ($self, $word, $base_url) = @_;
+    my ($self, $word) = @_;
 
     my $api  = $self->{api};
     my $furl = $self->{furl_http};
 
     my $df;
 
-    my $url = URI->new($base_url);
+    my $url = URI->new($BASE_URL);
 
     $url->query_form(
         'Appid'     => $self->{appid},

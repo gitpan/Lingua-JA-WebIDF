@@ -172,13 +172,8 @@ my @patterns = (
 
 test_tcp(
     client => sub {
-        my $port = shift;
 
-        local %Lingua::JA::WebIDF::API_URL = (
-            Bing         => "http://127.0.0.1:$port/bing/",
-            Yahoo        => "http://127.0.0.1:$port/yahoo/",
-            YahooPremium => "http://127.0.0.1:$port/yahoo_premium/",
-        );
+        my $port = shift;
 
         my $documents  = 300_0000_0000;
         my $default_df = 150_0000_0000;
@@ -215,17 +210,19 @@ test_tcp(
                 {
                     $webidf = Lingua::JA::WebIDF->new(\%config);
 
+                    local $Lingua::JA::WebIDF::API::Bing::BASE_URL         = "http://127.0.0.1:$port/bing/"          if $pattern->{api} eq 'Bing';
+                    local $Lingua::JA::WebIDF::API::Yahoo::BASE_URL        = "http://127.0.0.1:$port/yahoo/"         if $pattern->{api} eq 'Yahoo';
+                    local $Lingua::JA::WebIDF::API::YahooPremium::BASE_URL = "http://127.0.0.1:$port/yahoo_premium/" if $pattern->{api} eq 'YahooPremium';
+
                     my $query  = exists $pattern->{query} ? $pattern->{query} : 'オコジョ';
 
                     my ($df, $idf);
 
                     if (exists $pattern->{test_type})
                     {
-                        %Lingua::JA::WebIDF::API_URL = (
-                            Bing         => "http://127.0.0.1:$port/404/",
-                            Yahoo        => "http://127.0.0.1:$port/404/",
-                            YahooPremium => "http://127.0.0.1:$port/404/",
-                        );
+                        $Lingua::JA::WebIDF::API::Bing::BASE_URL         = "http://127.0.0.1:$port/bing/"          if $pattern->{api} eq 'Bing';
+                        $Lingua::JA::WebIDF::API::Yahoo::BASE_URL        = "http://127.0.0.1:$port/yahoo/"         if $pattern->{api} eq 'Yahoo';
+                        $Lingua::JA::WebIDF::API::YahooPremium::BASE_URL = "http://127.0.0.1:$port/yahoo_premium/" if $pattern->{api} eq 'YahooPremium';
                     }
 
                     warning_is { $df  = $webidf->df($query)  } $pattern->{warning}, 'df warning';
