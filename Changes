@@ -1,5 +1,8 @@
 Revision history for Perl extension Lingua::JA::WebIDF
 
+0.11    Tue, 05 Jun 2012 01:51:30 +0900
+        - changed Test::More dependency from 0.88 to 0.98
+
 0.10    Tue, 05 Jun 2012 00:34:58 +0900
         - added idf_type option
         - changed default api from Bing to Yahoo

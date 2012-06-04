@@ -8,7 +8,7 @@ use Carp ();
 use Module::Load ();
 use Furl::HTTP;
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 my $PM_PATH = $INC{ join( '/', split('::', __PACKAGE__) ) . '.pm' };
 $PM_PATH =~ s/\.pm$//;

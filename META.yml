@@ -5,7 +5,7 @@ author:
 build_requires:
   ExtUtils::MakeMaker: 6.59
   Test::Fatal: 0
-  Test::More: 0.88
+  Test::More: 0.98
   Test::Requires: 0
   Test::TCP: 1.15
   Test::Warn: 0.2
@@ -36,4 +36,4 @@ resources:
   bugtracker: https://github.com/pawa-/Lingua-JA-WebIDF/issues
   license: http://dev.perl.org/licenses
   repository: https://github.com/pawa-/Lingua-JA-WebIDF
-version: 0.10
+version: 0.11
