@@ -20,9 +20,9 @@ lib/Lingua/JA/WebIDF.pm
 lib/Lingua/JA/WebIDF/API/Bing.pm
 lib/Lingua/JA/WebIDF/API/Yahoo.pm
 lib/Lingua/JA/WebIDF/API/YahooPremium.pm
-lib/Lingua/JA/WebIDF/bing_utf8.st
 lib/Lingua/JA/WebIDF/Driver/Storable.pm
 lib/Lingua/JA/WebIDF/Driver/TokyoCabinet.pm
+lib/Lingua/JA/WebIDF/yahoo_utf8.st
 Makefile.PL
 MANIFEST			This list of files
 META.yml

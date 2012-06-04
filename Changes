@@ -1,5 +1,9 @@
 Revision history for Perl extension Lingua::JA::WebIDF
 
+0.10    Tue, 05 Jun 2012 00:34:58 +0900
+        - added idf_type option
+        - changed default api from Bing to Yahoo
+
 0.02    Mon, 14 May 2012 17:53:17 +0900
         - improved pluggability
         - added link to Tokyo Cabinet in documentation

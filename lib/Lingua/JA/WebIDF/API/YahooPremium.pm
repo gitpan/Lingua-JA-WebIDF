@@ -12,17 +12,14 @@ our $BASE_URL = 'http://search.yahooapis.jp/PremiumWebSearchService/V1/webSearch
 
 sub fetch_new_df
 {
-    my ($self, $word) = @_;
-
-    my $api  = $self->{api};
-    my $furl = $self->{furl_http};
+    my ($word, $furl, $appid) = @_;
 
     my $df;
 
     my $url = URI->new($BASE_URL);
 
     $url->query_form(
-        'appid'    => $self->{appid},
+        'appid'    => $appid,
         'query'    => qq|"$word"|,
         'type'     => 'all', # query type
         'results'  => 1,
@@ -37,10 +34,10 @@ sub fetch_new_df
         my $xml = $furl->get($url);
 
         if    ($xml =~ /totalResultsAvailable="([0-9]+)"/) { $df = $1; }
-        elsif ($xml =~ m|<Message>(.*?)</Message>|)        { Carp::carp("$api: $1"); }
-        else                                               { Carp::carp("$api: unknown response"); }
+        elsif ($xml =~ m|<Message>(.*?)</Message>|)        { Carp::carp("YahooPremium: $1"); }
+        else                                               { Carp::carp("YahooPremium: unknown response"); }
     }
-    else { Carp::carp("$api: $code $msg"); }
+    else { Carp::carp("YahooPremium: $code $msg"); }
 
     return $df;
 }

@@ -14,4 +14,6 @@ api
 Storable
 TokyoCabinet
 YahooPremium
+IDF
+RSJ
 df

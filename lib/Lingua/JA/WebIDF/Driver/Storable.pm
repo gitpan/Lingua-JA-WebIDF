@@ -1,6 +1,5 @@
 package Lingua::JA::WebIDF::Driver::Storable;
 
-use 5.008_001;
 use strict;
 use warnings;
 

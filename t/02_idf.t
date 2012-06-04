@@ -10,7 +10,6 @@ use JSON;
 use Encode qw/decode_utf8/;
 use Test::Requires qw/Plack::Builder Plack::Request Plack::Handler::Standalone/;
 
-
 unlink 'df.st';
 unlink 'df.tch';
 
@@ -168,6 +167,27 @@ my @patterns = (
         fetch_df  => 1,
         test_type => 'fetch df by TokyoCabinet',
     },
+    {
+        idf_type  => 1,
+        api       => 'Yahoo',
+        driver    => 'Storable',
+        df_file   => 'df.st',
+        fetch_df  => 1,
+    },
+    {
+        idf_type  => 2,
+        api       => 'Yahoo',
+        driver    => 'Storable',
+        df_file   => 'df.st',
+        fetch_df  => 1,
+    },
+    {
+        idf_type  => 3,
+        api       => 'Yahoo',
+        driver    => 'Storable',
+        df_file   => 'df.st',
+        fetch_df  => 1,
+    },
 );
 
 test_tcp(
@@ -188,8 +208,9 @@ test_tcp(
                 default_df => $default_df,
             );
 
-            $config{driver}  = $pattern->{driver}  if exists $pattern->{driver};
-            $config{df_file} = $pattern->{df_file} if exists $pattern->{df_file};
+            $config{idf_type} = $pattern->{idf_type} if exists $pattern->{idf_type};
+            $config{driver}   = $pattern->{driver}   if exists $pattern->{driver};
+            $config{df_file}  = $pattern->{df_file}  if exists $pattern->{df_file};
 
             subtest 'idf' => sub {
 
@@ -204,7 +225,8 @@ test_tcp(
 
                 if (exists $pattern->{exception})
                 {
-                    like(exception { $webidf = Lingua::JA::WebIDF->new(%config) }, qr/$pattern->{exception}/, 'exception');
+                    my $exception = exception { $webidf = Lingua::JA::WebIDF->new(%config); };
+                    like($exception, qr/$pattern->{exception}/, 'exception');
                 }
                 else
                 {
@@ -220,9 +242,9 @@ test_tcp(
 
                     if (exists $pattern->{test_type})
                     {
-                        $Lingua::JA::WebIDF::API::Bing::BASE_URL         = "http://127.0.0.1:$port/bing/"          if $pattern->{api} eq 'Bing';
-                        $Lingua::JA::WebIDF::API::Yahoo::BASE_URL        = "http://127.0.0.1:$port/yahoo/"         if $pattern->{api} eq 'Yahoo';
-                        $Lingua::JA::WebIDF::API::YahooPremium::BASE_URL = "http://127.0.0.1:$port/yahoo_premium/" if $pattern->{api} eq 'YahooPremium';
+                        $Lingua::JA::WebIDF::API::Bing::BASE_URL         = "http://127.0.0.1:$port/404/" if $pattern->{api} eq 'Bing';
+                        $Lingua::JA::WebIDF::API::Yahoo::BASE_URL        = "http://127.0.0.1:$port/404/" if $pattern->{api} eq 'Yahoo';
+                        $Lingua::JA::WebIDF::API::YahooPremium::BASE_URL = "http://127.0.0.1:$port/404/" if $pattern->{api} eq 'YahooPremium';
                     }
 
                     warning_is { $df  = $webidf->df($query)  } $pattern->{warning}, 'df warning';
@@ -238,9 +260,20 @@ test_tcp(
                     }
                     else { is($df, $default_df, 'default df'); }
 
-                    $df = 1 if $df == 0; # To avoid dividing by zero.
+                    if (!exists $pattern->{idf_type} || $pattern->{idf_type} == 1)
+                    {
+                        $df = 1 if $df == 0; # To avoid dividing by zero.
 
-                    is( $idf, log($documents / $df), 'idf' );
+                        is( $idf, log($documents / $df), 'idf_type1' );
+                    }
+                    elsif ($pattern->{idf_type} == 2)
+                    {
+                        is( $idf, log( ($documents - $df + 0.5) / ($df + 0.5) ), 'idf_type2' );
+                    }
+                    elsif ($pattern->{idf_type} == 3)
+                    {
+                        is( $idf, log( ($documents + 0.5) / ($df + 0.5) ), 'idf_type3' );
+                    }
                 }
             };
         }
