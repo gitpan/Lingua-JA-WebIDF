@@ -1,5 +1,8 @@
 Revision history for Perl extension Lingua::JA::WebIDF
 
+0.12    Thu, 07 Jun 2012 02:33:35 +0900
+        - removed redundant code
+
 0.11    Tue, 05 Jun 2012 01:51:30 +0900
         - changed Test::More dependency from 0.88 to 0.98
 

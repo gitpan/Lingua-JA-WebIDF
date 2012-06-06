@@ -15,22 +15,17 @@ sub fetch_df
         $self->{df} = Storable::lock_retrieve($self->{df_file});
     }
 
-    my $df = $self->{df};
-
-    return $df->{$word};
+    return $self->{df}->{$word};
 }
 
 sub save_df
 {
     my ($self, $word, $df_and_time) = @_;
 
-    my $df_ref  = $self->{df};
-    my $df_file = $self->{df_file};
+    $self->{df}->{$word} = $df_and_time;
 
-    $df_ref->{$word} = $df_and_time;
-
-    Storable::lock_nstore($df_ref, $self->{df_file})
-        or Carp::croak("Storable: can't store df data to $df_file");
+    Storable::lock_nstore($self->{df}, $self->{df_file})
+        or Carp::croak("Storable: can't store df data to $self->{df_file}");
 }
 
 1;

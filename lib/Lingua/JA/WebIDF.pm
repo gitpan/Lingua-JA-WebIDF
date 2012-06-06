@@ -8,7 +8,7 @@ use Carp ();
 use Module::Load ();
 use Furl::HTTP;
 
-our $VERSION = '0.11';
+our $VERSION = '0.12';
 
 my $PM_PATH = $INC{ join( '/', split('::', __PACKAGE__) ) . '.pm' };
 $PM_PATH =~ s/\.pm$//;
@@ -71,7 +71,7 @@ sub idf
 
     if (!defined $word)
     {
-        Carp::carp("Undefined word has been set to idf method");
+        Carp::carp("Undefined word has been set");
         return;
     }
 
@@ -99,7 +99,7 @@ sub df
 
     if (!defined $word)
     {
-        Carp::carp("Undefined word has been set to df method");
+        Carp::carp("Undefined word has been set");
         return;
     }
 
