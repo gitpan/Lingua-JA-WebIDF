@@ -123,6 +123,14 @@ my @patterns = (
         hit        => 0,
     },
     {
+        api        => 'Bing',
+        driver     => 'TokyoCabinet',
+        df_file    => 'df.tch',
+        fetch_df   => 0,
+        query      => 'タッチン',
+        hit        => 0,
+    },
+    {
         api      => 'Bing',
         driver   => 'Storable',
         df_file  => 'df.st',

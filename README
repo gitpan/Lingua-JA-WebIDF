@@ -4,8 +4,7 @@ NAME
 SYNOPSIS
       use Lingua::JA::WebIDF;
 
-      my $webidf = Lingua::JA::WebIDF->new
-      (
+      my $webidf = Lingua::JA::WebIDF->new(
           api       => 'Yahoo',
           appid     => $appid,
           fetch_df  => 1,
@@ -26,7 +25,7 @@ DESCRIPTION
     documents is not a good discriminator and should be given less weight
     than one which occurs in few documents.
 
-METHOD
+METHODS
   new( %config || \%config )
     Creates a new Lingua::JA::WebIDF instance.
 
@@ -79,9 +78,15 @@ METHOD
         Saves WebDF scores to the specified path.
 
         If undef is specified, 'yahoo_utf8.st' is used. This file is located
-        in 'Lingua/JA/WebIDF/' and contains the WebDF scores of about 60000
+        in 'Lingua/JA/WebIDF/' and contains the WebDF scores of about 100000
         words. There are other format files in the 'df' directory of this
         library.
+
+        The 100000 words were fetched from following data.
+
+        *   Noun.csv and Noun.adjv.csv in IPA dictionary
+
+        *   Japanese WordNet
 
         I recommend that you change the file depending on the type of Web
         API you specifies because WebDF may be different depending on it.
@@ -117,7 +122,7 @@ AUTHOR
     pawa <pawapawa@cpan.org>
 
 SEE ALSO
-    Lingua::JA::TFIDF
+    Lingua::JA::TFWebIDF
 
     Bing API: <http://www.bing.com/toolbox/bingdeveloper/>
 

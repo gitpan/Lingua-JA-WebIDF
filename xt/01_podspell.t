@@ -17,3 +17,5 @@ YahooPremium
 IDF
 RSJ
 df
+csv
+WordNet

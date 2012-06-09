@@ -8,7 +8,7 @@ use Carp ();
 use Module::Load ();
 use Furl::HTTP;
 
-our $VERSION = '0.12';
+our $VERSION = '0.14';
 
 my $PM_PATH = $INC{ join( '/', split('::', __PACKAGE__) ) . '.pm' };
 $PM_PATH =~ s/\.pm$//;
@@ -191,8 +191,7 @@ my ($appid);
 
   use Lingua::JA::WebIDF;
 
-  my $webidf = Lingua::JA::WebIDF->new
-  (
+  my $webidf = Lingua::JA::WebIDF->new(
       api       => 'Yahoo',
       appid     => $appid,
       fetch_df  => 1,
@@ -214,7 +213,7 @@ IDF is based on the intuition that a query term which occurs in
 many documents is not a good discriminator and should be given less weight
 than one which occurs in few documents.
 
-=head1 METHOD
+=head1 METHODS
 
 =head2 new( %config || \%config )
 
@@ -278,8 +277,18 @@ Saves WebDF scores to the specified path.
 
 If undef is specified, 'yahoo_utf8.st' is used.
 This file is located in 'Lingua/JA/WebIDF/'
-and contains the WebDF scores of about 60000 words.
+and contains the WebDF scores of about 100000 words.
 There are other format files in the 'df' directory of this library.
+
+The 100000 words were fetched from following data.
+
+=over 4
+
+=item * Noun.csv and Noun.adjv.csv in IPA dictionary
+
+=item * Japanese WordNet
+
+=back
 
 I recommend that you change the file depending on the type of Web API
 you specifies because WebDF may be different depending on it.
@@ -323,7 +332,7 @@ pawa E<lt>pawapawa@cpan.orgE<gt>
 
 =head1 SEE ALSO
 
-L<Lingua::JA::TFIDF>
+L<Lingua::JA::TFWebIDF>
 
 Bing API: L<http://www.bing.com/toolbox/bingdeveloper/>
 

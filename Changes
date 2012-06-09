@@ -1,5 +1,9 @@
 Revision history for Perl extension Lingua::JA::WebIDF
 
+0.14    Sat, 09 Jun 2012 13:59:34 +0900
+        - fixed documentation
+        - updated WebDF files (60000 words -> 100000 words)
+
 0.12    Thu, 07 Jun 2012 02:33:35 +0900
         - removed redundant code
 
