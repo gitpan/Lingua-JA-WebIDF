@@ -5,7 +5,8 @@ use Test::More;
 use Test::Warn;
 use Test::Fatal;
 
-can_ok('Lingua::JA::WebIDF', qw/new idf df/);
+
+can_ok('Lingua::JA::WebIDF', qw/new idf df db_open db_close purge/);
 
 my $exception = exception { Lingua::JA::WebIDF->new; };
 like($exception, qr/appid is needed/);

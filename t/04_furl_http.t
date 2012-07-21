@@ -8,6 +8,9 @@ use Test::TCP;
 use JSON;
 use Test::Requires qw/Plack::Builder Plack::Request Plack::Handler::Standalone/;
 
+binmode Test::More->builder->$_ => ':utf8'
+    for qw/output failure_output todo_output/;
+
 
 unlink 'df.st';
 unlink 'df.tch';
@@ -74,6 +77,7 @@ test_tcp(
                 }
 
                 my $webidf = Lingua::JA::WebIDF->new(%config);
+                $webidf->db_open('write') if $config{driver} eq 'TokyoCabinet';
 
                 {
                     no warnings 'once';

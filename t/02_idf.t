@@ -10,6 +10,10 @@ use JSON;
 use Encode qw/decode_utf8/;
 use Test::Requires qw/Plack::Builder Plack::Request Plack::Handler::Standalone/;
 
+binmode Test::More->builder->$_ => ':utf8'
+    for qw/output failure_output todo_output/;
+
+
 unlink 'df.st';
 unlink 'df.tch';
 
@@ -231,6 +235,7 @@ test_tcp(
                 else
                 {
                     $webidf = Lingua::JA::WebIDF->new(\%config);
+                    $webidf->db_open('write') if exists $config{driver} && $config{driver} eq 'TokyoCabinet';
 
                     local $Lingua::JA::WebIDF::API::Bing::BASE_URL         = "http://127.0.0.1:$port/bing/"          if $pattern->{api} eq 'Bing';
                     local $Lingua::JA::WebIDF::API::Yahoo::BASE_URL        = "http://127.0.0.1:$port/yahoo/"         if $pattern->{api} eq 'Yahoo';

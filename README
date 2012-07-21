@@ -78,11 +78,11 @@ METHODS
         Saves WebDF scores to the specified path.
 
         If undef is specified, 'yahoo_utf8.st' is used. This file is located
-        in 'Lingua/JA/WebIDF/' and contains the WebDF scores of about 100000
-        words. There are other format files in the 'df' directory of this
-        library.
+        in File::ShareDir::dist_dir('Lingua-JA-WebIDF'), and contains the
+        WebDF scores of about 100000 words. There are other format files in
+        the 'share' directory of this library.
 
-        The 100000 words were fetched from following data.
+        The 100000 words were fetched from the following data.
 
         *   Noun.csv and Noun.adjv.csv in IPA dictionary
 
@@ -117,6 +117,25 @@ METHODS
 
     If the WebDF score of $word is not saved or is expired, fetches it by
     using the Web API you specified and saves it.
+
+  db_open($mode)
+    Opens the database file.
+
+    If you use TokyoCabinet, you have to open database file by using this
+    method before idf|df|db_close|purge method is called.
+
+    $mode is 'read' or 'write'.
+
+  db_close
+    Closes the database file.
+
+    This method is called automatically when the object is destroyed. So,
+    you might not need to use this method explicitly.
+
+  purge($expires_in)
+    Purges old data in df_file.
+
+    If 365 is specified, the data which 365 days elapsed are purged.
 
 AUTHOR
     pawa <pawapawa@cpan.org>

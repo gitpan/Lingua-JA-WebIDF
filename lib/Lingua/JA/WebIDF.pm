@@ -7,14 +7,9 @@ use warnings;
 use Carp ();
 use Module::Load ();
 use Furl::HTTP;
+use File::ShareDir qw/dist_file/;
 
-our $VERSION = '0.14';
-
-my $PM_PATH = $INC{ join( '/', split('::', __PACKAGE__) ) . '.pm' };
-$PM_PATH =~ s/\.pm$//;
-
-my @SUPPORTED_API    = _plugin_list('API');
-my @SUPPORTED_DRIVER = _plugin_list('Driver');
+our $VERSION = '0.20';
 
 
 sub _options
@@ -47,8 +42,8 @@ sub new
     }
 
     Carp::croak('appid is needed')                        unless defined $options->{appid};
-    Carp::croak("Unknown driver: $options->{driver}")     unless grep { $options->{driver} eq $_   } @SUPPORTED_DRIVER;
-    Carp::croak("Unknown api: $options->{api}")           unless grep { $options->{api}    eq $_   } @SUPPORTED_API;
+    Carp::croak("Unknown api: $options->{api}")           unless grep { $options->{api}    eq $_   } _plugin_list('API');
+    Carp::croak("Unknown driver: $options->{driver}")     unless grep { $options->{driver} eq $_   } _plugin_list('Driver');
     Carp::croak("Unknown idf type: $options->{idf_type}") unless grep { $options->{idf_type} eq $_ } 1 .. 3;
 
     if (defined $options->{Furl_HTTP})
@@ -57,10 +52,10 @@ sub new
     }
     else { $options->{furl_http} = Furl::HTTP->new; }
 
-    Module::Load::load(__PACKAGE__ . '::API::' . $options->{api});
+    Module::Load::load(__PACKAGE__ . '::API::'    . $options->{api});
     Module::Load::load(__PACKAGE__ . '::Driver::' . $options->{driver});
 
-    $options->{df_file} = "$PM_PATH/yahoo_utf8.st" unless defined $options->{df_file};
+    $options->{df_file} = dist_file( join( '-', split('::', __PACKAGE__) ), 'yahoo_utf8.st' ) unless defined $options->{df_file};
 
     bless $options, $class;
 }
@@ -103,6 +98,7 @@ sub df
         return;
     }
 
+    $word =~ tr/\t/ /;
     my $df_and_time = $self->_fetch_df($word);
 
     my ($df, $time, $elapsed_time);
@@ -130,13 +126,46 @@ sub df
     return $df;
 }
 
+sub db_open
+{
+    my ($self, $mode) = @_;
+
+    no strict 'refs';
+    &{__PACKAGE__ . '::Driver::' . $self->{driver} . '::db_open'}($self, $mode);
+}
+
+sub db_close
+{
+    my $self = shift;
+
+    no strict 'refs';
+    &{__PACKAGE__ . '::Driver::' . $self->{driver} . '::db_close'}($self) if exists $self->{db};
+}
+
+sub DESTROY
+{
+    my $self = shift;
+
+    no strict 'refs';
+    &{__PACKAGE__ . '::Driver::' . $self->{driver} . '::db_close'}($self) if exists $self->{db};
+}
+
+sub purge
+{
+    my ($self, $days) = @_;
+
+    Carp::croak("purge method was called without arguments") unless defined $days;
+
+    no strict 'refs';
+    &{__PACKAGE__ . '::Driver::' . $self->{driver} . '::purge'}($self, $days);
+}
+
 sub _fetch_df
 {
     my ($self, $word) = @_;
 
     no strict 'refs';
-    my $driver = __PACKAGE__ . '::Driver::' . $self->{driver};
-    &{$driver . '::fetch_df'}($self, $word);
+    &{__PACKAGE__ . '::Driver::' . $self->{driver} . '::fetch_df'}($self, $word);
 }
 
 sub _save_df
@@ -146,8 +175,7 @@ sub _save_df
     my $df_and_time = $df . "\t" . time;
 
     no strict 'refs';
-    my $driver = __PACKAGE__ . '::Driver::' . $self->{driver};
-    &{$driver . '::save_df'}($self, $word, $df_and_time);
+    &{__PACKAGE__ . '::Driver::' . $self->{driver} . '::save_df'}($self, $word, $df_and_time);
 }
 
 sub _fetch_new_df
@@ -155,13 +183,15 @@ sub _fetch_new_df
     my ($self, $word) = @_;
 
     no strict 'refs';
-    my $api = __PACKAGE__ . '::API::' . $self->{api};
-    &{$api . '::fetch_new_df'}($word, $self->{furl_http}, $self->{appid});
+    &{__PACKAGE__ . '::API::' . $self->{api} . '::fetch_new_df'}($word, $self->{furl_http}, $self->{appid});
 }
 
 sub _plugin_list
 {
     my $type = shift;
+
+    my $PM_PATH = $INC{ join( '/', split('::', __PACKAGE__) ) . '.pm' };
+    $PM_PATH =~ s/\.pm$//;
 
     my $dir = "$PM_PATH/$type/";
 
@@ -276,11 +306,11 @@ Fetches and saves WebDF scores with the specified driver.
 Saves WebDF scores to the specified path.
 
 If undef is specified, 'yahoo_utf8.st' is used.
-This file is located in 'Lingua/JA/WebIDF/'
+This file is located in L<File::ShareDir>::dist_dir('Lingua-JA-WebIDF'),
 and contains the WebDF scores of about 100000 words.
-There are other format files in the 'df' directory of this library.
+There are other format files in the 'share' directory of this library.
 
-The 100000 words were fetched from following data.
+The 100000 words were fetched from the following data.
 
 =over 4
 
@@ -325,6 +355,28 @@ Fetches the WebDF score of $word.
 
 If the WebDF score of $word is not saved or is expired,
 fetches it by using the Web API you specified and saves it.
+
+=head2 db_open($mode)
+
+Opens the database file.
+
+If you use TokyoCabinet, you have to open database file
+by using this method before idf|df|db_close|purge method is called.
+
+$mode is 'read' or 'write'.
+
+=head2 db_close
+
+Closes the database file.
+
+This method is called automatically when the object is destroyed.
+So, you might not need to use this method explicitly.
+
+=head2 purge($expires_in)
+
+Purges old data in df_file.
+
+If 365 is specified, the data which 365 days elapsed are purged.
 
 =head1 AUTHOR
 

@@ -10,6 +10,10 @@ use Storable;
 use Encode qw/decode_utf8/;
 use Test::Requires qw/Plack::Builder Plack::Request Plack::Handler::Standalone TokyoCabinet/;
 
+binmode Test::More->builder->$_ => ':utf8'
+    for qw/output failure_output todo_output/;
+
+
 unlink 'df.st';
 unlink 'df.tch';
 
@@ -159,6 +163,7 @@ test_tcp(
             $config{expires_in} = $pattern->{expires_in} if exists $pattern->{expires_in};
 
             my $webidf = Lingua::JA::WebIDF->new(%config);
+            $webidf->db_open('write') if exists $config{driver} && $config{driver} eq 'TokyoCabinet';
 
             {
                 no warnings 'once';

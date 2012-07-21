@@ -1,5 +1,11 @@
 Revision history for Perl extension Lingua::JA::WebIDF
 
+0.20    Sun, 22 Jul 2012 00:00:59 +0900
+        - added purge method
+        - added db_open method
+        - added db_close method
+        - added dependency on File::ShareDir
+
 0.14    Sat, 09 Jun 2012 13:59:34 +0900
         - fixed documentation
         - updated WebDF files (60000 words -> 100000 words)
