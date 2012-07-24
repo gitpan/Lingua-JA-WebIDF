@@ -41,7 +41,6 @@ METHODS
       fetch_df            1
       expires_in          365
       documents           250_0000_0000
-      default_df          5000
       Furl_HTTP           undef
 
     idf_type => 1 || 2 || 3
@@ -95,7 +94,7 @@ METHODS
         Doesn't fetch WebDF scores. (If 0 is specified.)
 
         If the WebDF score you want to know is already saved, it is used.
-        Otherwise, the value of default_df is used.
+        Otherwise, returns undef.
 
     expires_in => $days
         If 365 is specified, a WebDF score expires in 365 days after fetches

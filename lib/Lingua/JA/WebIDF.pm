@@ -9,7 +9,7 @@ use Module::Load ();
 use Furl::HTTP;
 use File::ShareDir qw/dist_file/;
 
-our $VERSION = '0.21';
+our $VERSION = '0.30';
 
 
 sub _options
@@ -19,7 +19,6 @@ sub _options
         documents     => 250_0000_0000,
         df_file       => undef,
         fetch_df      => 1,
-        default_df    => 5000,
         expires_in    => 365, # number of days
         driver        => 'Storable',
         api           => 'Yahoo',
@@ -77,6 +76,8 @@ sub idf
     if (!$is_df) { $df = $self->df($word); }
     else         { $df = $word;            }
 
+    return unless defined $df;
+
     my $N    = $self->{documents};
     my $type = $self->{idf_type};
 
@@ -104,7 +105,7 @@ sub df
         return;
     }
 
-    $word =~ tr/\t/ /;
+    $word =~ s/\t+/ /g;
     my $df_and_time = $self->_fetch_df($word);
 
     my ($df, $time, $elapsed_time);
@@ -126,7 +127,6 @@ sub df
             $self->_save_df($word, $new_df);
             return $new_df;
         }
-        else { return (defined $df) ? $df : $self->{default_df}; }
     }
 
     return $df;
@@ -267,7 +267,6 @@ The following configuration is used if you don't set %config.
   fetch_df            1
   expires_in          365
   documents           250_0000_0000
-  default_df          5000
   Furl_HTTP           undef
 
 =over 4
@@ -334,7 +333,7 @@ you specifies because WebDF may be different depending on it.
 Doesn't fetch WebDF scores. (If 0 is specified.)
 
 If the WebDF score you want to know is already saved, it is used.
-Otherwise, the value of default_df is used.
+Otherwise, returns undef.
 
 =item expires_in => $days
 

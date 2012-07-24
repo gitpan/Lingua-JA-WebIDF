@@ -32,9 +32,8 @@ warning_is { $score = $webidf->idf(undef, 'df') }
 'Undefined df has been set', 'idf: undefined df';
 is($score, undef);
 
-my $default_df = 5000;
-isnt($webidf->df('川'), undef,       'fetch_df from default df_file');
-isnt($webidf->df('川'), $default_df, 'fetch df from default df_file');
+isnt($webidf->df('川'),     undef, 'fetch_df from default df_file');
+is($webidf->df('川 x 100'), undef, 'fetch df from default df_file');
 
 is($webidf->idf(100, 'df'), log(250_0000_0000 / 100), 'calculate idf with df');
 

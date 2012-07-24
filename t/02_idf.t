@@ -200,7 +200,6 @@ test_tcp(
         my $port = shift;
 
         my $documents  = 300_0000_0000;
-        my $default_df = 150_0000_0000;
 
         for my $pattern (@patterns)
         {
@@ -209,7 +208,6 @@ test_tcp(
                 appid      => 'test',
                 fetch_df   => $pattern->{fetch_df},
                 documents  => $documents,
-                default_df => $default_df,
             );
 
             $config{idf_type} = $pattern->{idf_type} if exists $pattern->{idf_type};
@@ -259,25 +257,28 @@ test_tcp(
                     {
                         if ($pattern->{warning} && !exists $pattern->{test_type})
                         {
-                            is($df, $default_df, 'default df');
+                            is($df, undef, 'warning');
                         }
-                        else { isnt($df, $default_df, 'fetch_df'); }
+                        else { isnt($df, undef, 'fetch_df'); }
                     }
-                    else { is($df, $default_df, 'default df'); }
+                    else { is($df, undef, 'dont fetch'); }
 
-                    if (!exists $pattern->{idf_type} || $pattern->{idf_type} == 1)
+                    if (defined $df && defined $idf)
                     {
-                        $df = 1 if $df == 0; # To avoid dividing by zero.
+                        if (!exists $pattern->{idf_type} || $pattern->{idf_type} == 1)
+                        {
+                            $df = 1 if $df == 0; # To avoid dividing by zero.
 
-                        is( $idf, log($documents / $df), 'idf_type1' );
-                    }
-                    elsif ($pattern->{idf_type} == 2)
-                    {
-                        is( $idf, log( ($documents - $df + 0.5) / ($df + 0.5) ), 'idf_type2' );
-                    }
-                    elsif ($pattern->{idf_type} == 3)
-                    {
-                        is( $idf, log( ($documents + 0.5) / ($df + 0.5) ), 'idf_type3' );
+                            is( $idf, log($documents / $df), 'idf_type1' );
+                        }
+                        elsif ($pattern->{idf_type} == 2)
+                        {
+                            is( $idf, log( ($documents - $df + 0.5) / ($df + 0.5) ), 'idf_type2' );
+                        }
+                        elsif ($pattern->{idf_type} == 3)
+                        {
+                            is( $idf, log( ($documents + 0.5) / ($df + 0.5) ), 'idf_type3' );
+                        }
                     }
                 }
             };

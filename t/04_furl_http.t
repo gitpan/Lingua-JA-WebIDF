@@ -53,8 +53,6 @@ test_tcp(
 
         my $port = shift;
 
-        my $default_df = 1_0000;
-
         for my $pattern (@patterns)
         {
             my %config = (
@@ -62,7 +60,6 @@ test_tcp(
                 driver     => $pattern->{driver},
                 df_file    => $pattern->{df_file},
                 appid      => 'test',
-                default_df => $default_df,
                 fetch_df   => $pattern->{fetch_df},
                 Furl_HTTP  => $pattern->{Furl_HTTP},
             );
@@ -93,12 +90,12 @@ test_tcp(
                 if (!exists $pattern->{no_warning})
                 {
                     warning_like { $df = $webidf->df($query) } qr/timeout/, 'timeout';
-                    is($df, $default_df, 'default df');
+                    is($df, undef, 'warning');
                 }
                 else
                 {
                     $df = $webidf->df($query);
-                    isnt($df, $default_df, 'df');
+                    isnt($df, undef, 'fetch df');
                 }
             };
         }

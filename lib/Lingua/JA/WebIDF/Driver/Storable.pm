@@ -49,4 +49,7 @@ sub purge
         or Carp::croak("Storable: can't store df data to $self->{df_file}");
 }
 
+sub db_open  {}
+sub db_close {}
+
 1;
