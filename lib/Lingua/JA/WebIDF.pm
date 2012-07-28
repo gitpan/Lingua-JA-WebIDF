@@ -7,9 +7,10 @@ use warnings;
 use Carp ();
 use Module::Load ();
 use Furl::HTTP;
-use File::ShareDir qw/dist_file/;
+use File::ShareDir ();
+use File::Basename ();
 
-our $VERSION = '0.30';
+our $VERSION = '0.31';
 
 
 sub _options
@@ -41,9 +42,12 @@ sub new
     }
 
     Carp::croak('appid is needed')                        unless defined $options->{appid};
-    Carp::croak("Unknown api: $options->{api}")           unless grep { $options->{api}    eq $_   } _plugin_list('API');
-    Carp::croak("Unknown driver: $options->{driver}")     unless grep { $options->{driver} eq $_   } _plugin_list('Driver');
+    Carp::croak("Unknown api: $options->{api}")           unless grep { $options->{api}      eq $_ } _plugin_list('API');
+    Carp::croak("Unknown driver: $options->{driver}")     unless grep { $options->{driver}   eq $_ } _plugin_list('Driver');
     Carp::croak("Unknown idf type: $options->{idf_type}") unless grep { $options->{idf_type} eq $_ } 1 .. 3;
+
+    Module::Load::load(__PACKAGE__ . '::API::'    . $options->{api});
+    Module::Load::load(__PACKAGE__ . '::Driver::' . $options->{driver});
 
     if (defined $options->{Furl_HTTP})
     {
@@ -51,10 +55,8 @@ sub new
     }
     else { $options->{furl_http} = Furl::HTTP->new; }
 
-    Module::Load::load(__PACKAGE__ . '::API::'    . $options->{api});
-    Module::Load::load(__PACKAGE__ . '::Driver::' . $options->{driver});
-
-    $options->{df_file} = dist_file( join( '-', split('::', __PACKAGE__) ), 'yahoo_utf8.st' ) unless defined $options->{df_file};
+    $options->{df_file}
+        = File::ShareDir::dist_file( join( '-', split('::', __PACKAGE__) ), 'yahoo_utf8.st' ) unless defined $options->{df_file};
 
     bless $options, $class;
 }
@@ -390,6 +392,8 @@ pawa E<lt>pawapawa@cpan.orgE<gt>
 =head1 SEE ALSO
 
 L<Lingua::JA::TFWebIDF>
+
+L<Lingua::JA::WebIDF::Driver::TokyoTyrant>
 
 Bing API: L<http://www.bing.com/toolbox/bingdeveloper/>
 

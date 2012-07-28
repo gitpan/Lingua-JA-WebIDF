@@ -17,7 +17,8 @@ my $webidf = Lingua::JA::WebIDF->new(
 );
 
 my $df = $webidf->df("テス\tト");
-is($webidf->df('テス ト'), $df, 'tab to space');
+isnt($df, undef, 'not undef');
+is($webidf->df('テス ト'), $df);
 
 $df = $webidf->df('アア' . "\t" x 10 . 'ア');
 
@@ -28,7 +29,8 @@ $webidf = Lingua::JA::WebIDF->new(
     df_file  => 'df.st',
 );
 
-is($webidf->df('アア ア'), $df, 'tabs to space');
+isnt($df, undef, 'not undef');
+is($webidf->df('アア ア'), $df);
 
 unlink 'df.st';
 

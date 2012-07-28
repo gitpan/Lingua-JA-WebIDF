@@ -1,5 +1,8 @@
 Revision history for Perl extension Lingua::JA::WebIDF
 
+0.31    Sat, 28 Jul 2012 14:36:29 +0900
+        - minor code changes
+
 0.30    Tue, 24 Jul 2012 20:10:14 +0900
         - removed default_df option
 

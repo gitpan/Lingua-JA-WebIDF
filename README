@@ -142,6 +142,8 @@ AUTHOR
 SEE ALSO
     Lingua::JA::TFWebIDF
 
+    Lingua::JA::WebIDF::Driver::TokyoTyrant
+
     Bing API: <http://www.bing.com/toolbox/bingdeveloper/>
 
     Yahoo API: <http://developer.yahoo.co.jp/>

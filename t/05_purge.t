@@ -20,10 +20,11 @@ my $expires_in = 365;
 preparation();
 
 my $webidf = Lingua::JA::WebIDF->new(
-    appid    => 'test',
-    fetch_df => 0,
-    driver   => 'Storable',
-    df_file  => 'df.st',
+    appid      => 'test',
+    fetch_df   => 0,
+    driver     => 'Storable',
+    df_file    => 'df.st',
+    expires_in => $expires_in,
 );
 
 my $exception = exception { $webidf->purge };
@@ -32,10 +33,11 @@ like($exception, qr/called without arguments/, 'called without aruguments');
 $webidf->purge($expires_in);
 
 $webidf = Lingua::JA::WebIDF->new(
-    appid    => 'test',
-    fetch_df => 0,
-    driver   => 'TokyoCabinet',
-    df_file  => 'df.tch',
+    appid      => 'test',
+    fetch_df   => 0,
+    driver     => 'TokyoCabinet',
+    df_file    => 'df.tch',
+    expires_in => $expires_in,
 );
 
 $webidf->db_open('write');

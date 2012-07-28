@@ -85,8 +85,8 @@ sub db_open
 
 sub db_close
 {
-    my $hdb = shift->{db} || Carp::croak('TokyoCabinet DB file is not opened');
-    $hdb->close;
+    my $hdb = shift->{db};
+    $hdb->close if defined $hdb;
 }
 
 1;
