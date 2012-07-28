@@ -23,14 +23,14 @@ my @patterns = (
         driver    => 'Storable',
         df_file   => 'df.st',
         fetch_df  => 1,
-        exception => 'Unknown api',
+        exception => 'locate',
     },
     {
         api       => 'Bing',
         driver    => 'Strable',
         df_file   => 'df.st',
         fetch_df  => 0,
-        exception => 'Unknown driver',
+        exception => 'locate',
     },
     {
         api      => 'Bing',

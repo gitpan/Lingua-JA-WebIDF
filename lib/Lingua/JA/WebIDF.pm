@@ -8,9 +8,8 @@ use Carp ();
 use Module::Load ();
 use Furl::HTTP;
 use File::ShareDir ();
-use File::Basename ();
 
-our $VERSION = '0.31';
+our $VERSION = '0.32';
 
 
 sub _options
@@ -42,8 +41,6 @@ sub new
     }
 
     Carp::croak('appid is needed')                        unless defined $options->{appid};
-    Carp::croak("Unknown api: $options->{api}")           unless grep { $options->{api}      eq $_ } _plugin_list('API');
-    Carp::croak("Unknown driver: $options->{driver}")     unless grep { $options->{driver}   eq $_ } _plugin_list('Driver');
     Carp::croak("Unknown idf type: $options->{idf_type}") unless grep { $options->{idf_type} eq $_ } 1 .. 3;
 
     Module::Load::load(__PACKAGE__ . '::API::'    . $options->{api});
@@ -192,25 +189,6 @@ sub _fetch_new_df
 
     no strict 'refs';
     &{__PACKAGE__ . '::API::' . $self->{api} . '::fetch_new_df'}($word, $self->{furl_http}, $self->{appid});
-}
-
-sub _plugin_list
-{
-    my $type = shift;
-
-    my $PM_PATH = $INC{ join( '/', split('::', __PACKAGE__) ) . '.pm' };
-    $PM_PATH =~ s/\.pm$//;
-
-    my $dir = "$PM_PATH/$type/";
-
-    opendir(my $dh, $dir) or Carp::croak("Can't open $dir: $!");
-    my @contents = readdir $dh;
-    closedir($dh);
-
-    my @plugins
-        =  map { my $file = $_; $file =~ s/\.pm$//; $file; } grep { /\.pm$/ } @contents;
-
-    return @plugins;
 }
 
 1;

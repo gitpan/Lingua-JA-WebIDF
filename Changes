@@ -1,5 +1,8 @@
 Revision history for Perl extension Lingua::JA::WebIDF
 
+0.32    Sat, 28 Jul 2012 17:50:26 +0900
+        - removed _plugin_list function
+
 0.31    Sat, 28 Jul 2012 14:36:29 +0900
         - minor code changes
 
