@@ -39,7 +39,7 @@ sub purge
     {
         my ($df, $time) = split(/\t/, $df_of->{$key});
 
-        if (time - $time > 60 * 60 * 24 * $days)
+        if (time - $time >= 60 * 60 * 24 * $days)
         {
             delete $df_of->{$key};
         }

@@ -13,8 +13,6 @@ sub fetch_new_df
 {
     my ($word, $furl, $appid) = @_;
 
-    my $df;
-
     my $url = URI->new($BASE_URL);
 
     $url->query_form(
@@ -27,6 +25,8 @@ sub fetch_new_df
     );
 
     my (undef, $code, $msg, undef, $body) = $furl->get($url);
+
+    my $df;
 
     if ($code == 200)
     {

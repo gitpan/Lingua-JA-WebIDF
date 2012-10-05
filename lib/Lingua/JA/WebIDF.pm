@@ -7,9 +7,8 @@ use warnings;
 use Carp ();
 use Module::Load ();
 use Furl::HTTP;
-use File::ShareDir ();
 
-our $VERSION = '0.32';
+our $VERSION = '0.40';
 
 
 sub _options
@@ -17,13 +16,14 @@ sub _options
     return {
         idf_type      => 1,
         documents     => 250_0000_0000,
-        df_file       => undef,
-        fetch_df      => 1,
+        df_file       => './df.tch',
+        fetch_df      => 0,
         expires_in    => 365, # number of days
-        driver        => 'Storable',
-        api           => 'Yahoo',
+        driver        => 'TokyoCabinet',
+        api           => 'YahooPremium',
         appid         => undef,
         Furl_HTTP     => undef,
+        verbose       => 1,
     };
 }
 
@@ -40,7 +40,8 @@ sub new
         else                          { $options->{$key} = $args{$key};      }
     }
 
-    Carp::croak('appid is needed')                        unless defined $options->{appid};
+    Carp::croak('df_file is not found')                   unless -e $options->{df_file};
+    Carp::croak('appid is required')                      if ($options->{fetch_df} && !defined $options->{appid});
     Carp::croak("Unknown idf type: $options->{idf_type}") unless grep { $options->{idf_type} eq $_ } 1 .. 3;
 
     Module::Load::load(__PACKAGE__ . '::API::'    . $options->{api});
@@ -52,9 +53,6 @@ sub new
     }
     else { $options->{furl_http} = Furl::HTTP->new; }
 
-    $options->{df_file}
-        = File::ShareDir::dist_file( join( '-', split('::', __PACKAGE__) ), 'yahoo_utf8.st' ) unless defined $options->{df_file};
-
     bless $options, $class;
 }
 
@@ -62,16 +60,22 @@ sub idf
 {
     my ($self, $word, $is_df) = @_;
 
-    if (!defined $word)
+    if (!defined $word || !length $word)
     {
-        if (!defined $is_df) { Carp::carp("Undefined word has been set"); }
-        else                 { Carp::carp("Undefined df has been set");   }
+        if ($self->{verbose})
+        {
+            if (!defined $is_df) { Carp::carp("Undefined or empty word has been set"); }
+            else                 { Carp::carp("Undefined or empty df has been set");   }
+        }
 
         return;
     }
 
     my $df;
 
+    # pattern1: idf('hoge')   -> fetch idf of 'hoge'
+    # pattern2: idf(86000, 1) -> calc  idf by using 86000
+    #
     if (!$is_df) { $df = $self->df($word); }
     else         { $df = $word;            }
 
@@ -98,13 +102,14 @@ sub df
 {
     my ($self, $word) = @_;
 
-    if (!defined $word)
+    if (!defined $word || !length $word)
     {
-        Carp::carp("Undefined word has been set");
+        Carp::carp("Undefined or empty word has been set") if $self->{verbose};
         return;
     }
 
     $word =~ s/\t+/ /g;
+
     my $df_and_time = $self->_fetch_df($word);
 
     my ($df, $time, $elapsed_time);
@@ -115,17 +120,28 @@ sub df
         $elapsed_time = time - $time;
     }
 
-    if ( !defined $df_and_time || $elapsed_time > (60 * 60 * 24 * $self->{expires_in}) )
+    if ( !defined $df_and_time || $elapsed_time >= (60 * 60 * 24 * $self->{expires_in}) )
     {
-        my $new_df;
-
-        $new_df = $self->_fetch_new_df($word) if $self->{fetch_df};
-
-        if (defined $new_df)
+        if ($self->{fetch_df})
         {
-            $self->_save_df($word, $new_df);
-            return $new_df;
+            my $new_df = $self->_fetch_new_df($word);
+
+            if (defined $new_df)
+            {
+                $self->_save_df($word, $new_df);
+                return $new_df;
+            }
         }
+    }
+
+    if (!defined $df)
+    {
+        if ($self->{verbose})
+        {
+            Carp::carp("DF of '$word' is not found in df file. Please use fetch_df option") unless $self->{fetch_df};
+        }
+
+        return;
     }
 
     return $df;
@@ -192,6 +208,7 @@ sub _fetch_new_df
 }
 
 1;
+
 __END__
 
 =encoding utf8
@@ -201,29 +218,24 @@ __END__
 Lingua::JA::WebIDF - WebIDF calculator
 
 =for test_synopsis
-my ($appid);
+my (%config);
 
 =head1 SYNOPSIS
 
   use Lingua::JA::WebIDF;
 
-  my $webidf = Lingua::JA::WebIDF->new(
-      api       => 'Yahoo',
-      appid     => $appid,
-      fetch_df  => 1,
-      Furl_HTTP => { timeout => 3 }
-  );
+  my $webidf = Lingua::JA::WebIDF->new(%config);
 
   print $webidf->idf("東京"); # low
   print $webidf->idf("スリジャヤワルダナプラコッテ"); # high
 
 =head1 DESCRIPTION
 
-Lingua::JA::WebIDF calculates WebIDF scores.
+Lingua::JA::WebIDF calculates WebIDF weight.
 
-WebIDF(Inverse Document Frequency) scores represent the rarity of words on the Web.
-The WebIDF scores of rare words are high.
-Conversely, the WebIDF scores of common words are low.
+WebIDF(Inverse Document Frequency) weight represents the rarity of a word on the Web.
+The WebIDF weight of a rare word is high.
+Conversely, the WebIDF weight of a common word is low.
 
 IDF is based on the intuition that a query term which occurs in
 many documents is not a good discriminator and should be given less weight
@@ -240,14 +252,15 @@ The following configuration is used if you don't set %config.
   KEY                 DEFAULT VALUE
   -----------         ---------------
   idf_type            1
-  api                 'Yahoo'
+  api                 'YahooPremium'
   appid               undef
-  driver              'Storable'
-  df_file             undef
-  fetch_df            1
+  driver              'TokyoCabinet'
+  df_file             './df.tch'
+  fetch_df            0
   expires_in          365
   documents           250_0000_0000
   Furl_HTTP           undef
+  verbose             1
 
 =over 4
 
@@ -266,58 +279,45 @@ The type1 is the most commonly cited form of IDF.
 
 The type2 is a simple version of the RSJ weight.
 
-              N - n_i + 0.5
-  w_i = log ----------------  (2)
-               n_i + 0.5
+                   N - n_i + 0.5
+  idf(t_i) = log ----------------  (2)
+                    n_i + 0.5
 
 
 The type3 is a modification of (2).
 
-              N + 0.5
-  w_i = log -----------  (3)
-             n_i + 0.5
+                   N + 0.5
+  idf(t_i) = log -----------  (3)
+                  n_i + 0.5
 
-=item api => 'Yahoo' || 'YahooPremium' || 'Bing'
+=item api => 'Yahoo' || 'YahooPremium'
 
-Uses the specified Web API when fetches WebDF(Document Frequency) scores
-from the Web.
+Uses the specified Web API when fetches WebDF(Document Frequency).
 
 =item driver => 'Storable' || 'TokyoCabinet'
 
-Fetches and saves WebDF scores with the specified driver.
+Fetches and saves WebDF with the specified driver.
 
 =item df_file => $path
 
-Saves WebDF scores to the specified path.
+Saves WebDF to the specified path.
 
-If undef is specified, 'yahoo_utf8.st' is used.
-This file is located in L<File::ShareDir>::dist_dir('Lingua-JA-WebIDF'),
-and contains the WebDF scores of about 100000 words.
-There are other format files in the 'share' directory of this library.
-
-The 100000 words were fetched from the following data.
-
-=over 4
-
-=item * Noun.csv and Noun.adjv.csv in IPA dictionary
-
-=item * Japanese WordNet
-
-=back
+In order to reduce access to Web API,
+please download a big df file from L<http://misc.pawafuru.com/webidf/>.
 
 I recommend that you change the file depending on the type of Web API
 you specifies because WebDF may be different depending on it.
 
 =item fech_df => 0
 
-Doesn't fetch WebDF scores. (If 0 is specified.)
+Never fetches WebDF from the Web if 0 is specified.
 
-If the WebDF score you want to know is already saved, it is used.
-Otherwise, returns undef.
+If the WebDF you want to know has already saved, it is used.
+If it is not so, returns undef.
 
 =item expires_in => $days
 
-If 365 is specified, a WebDF score expires in 365 days after fetches it.
+If 365 is specified, WebDF expires in 365 days after fetches it.
 
 =item Furl_HTTP => \%option
 
@@ -325,37 +325,41 @@ Sets the options of L<Furl::HTTP>->new.
 
 If you want to use proxy server, you have to use this option.
 
+=item verbose => 1 || 0
+
+If 1 is specified, shows verbose error messages.
+
 =back
 
 =head2 idf($word)
 
-Calculates the WebIDF score of $word.
-
-If the WebDF score of $word is not saved or is expired,
-fetches it by using the Web API you specified and saves it.
+Calculates the WebIDF weight of $word via df($word) method.
 
 =head2 df($word)
 
-Fetches the WebDF score of $word.
+Fetches the WebDF of $word.
 
-If the WebDF score of $word is not saved or is expired,
+If the WebDF of $word has not been saved yet or has expired,
 fetches it by using the Web API you specified and saves it.
+
+If the WebDF of $word has expired and fetch_df is 0,
+the expired WebDF is used.
 
 =head2 db_open($mode)
 
-Opens the database file.
+Opens the database file which is located in $path.
 
-If you use TokyoCabinet, you have to open database file
-by using this method before idf|df|db_close|purge method is called.
+If you use TokyoCabinet, you have to open the database file
+via this method before idf|df|db_close|purge method is called.
 
 $mode is 'read' or 'write'.
 
 =head2 db_close
 
-Closes the database file.
+Closes the database file which is located in $path.
 
-This method is called automatically when the object is destroyed.
-So, you might not need to use this method explicitly.
+This method is called automatically when the object is destroyed,
+so you might not need to use this method explicitly.
 
 =head2 purge($expires_in)
 
@@ -372,8 +376,6 @@ pawa E<lt>pawapawa@cpan.orgE<gt>
 L<Lingua::JA::TFWebIDF>
 
 L<Lingua::JA::WebIDF::Driver::TokyoTyrant>
-
-Bing API: L<http://www.bing.com/toolbox/bingdeveloper/>
 
 Yahoo API: L<http://developer.yahoo.co.jp/>
 

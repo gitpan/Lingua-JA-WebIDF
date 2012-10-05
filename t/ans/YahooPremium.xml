@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ResultSet firstResultPosition="1" totalResultsAvailable="2000" totalResultsReturned="1" xmlns="urn:yahoo:jp:srch" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:yahoo:jp:srch http://search.yahooapis.jp/PremiumWebSearchService/V1/WebSearchResponse.xsd">
+    <Result>
+        <Title></Title>
+        <Summary></Summary>
+        <Url></Url>
+        <ClickUrl></ClickUrl>
+        <ModificationDate />
+        <Cache></Cache>
+    </Result>
+</ResultSet>

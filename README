@@ -4,22 +4,17 @@ NAME
 SYNOPSIS
       use Lingua::JA::WebIDF;
 
-      my $webidf = Lingua::JA::WebIDF->new(
-          api       => 'Yahoo',
-          appid     => $appid,
-          fetch_df  => 1,
-          Furl_HTTP => { timeout => 3 }
-      );
+      my $webidf = Lingua::JA::WebIDF->new(%config);
 
       print $webidf->idf("東京"); # low
       print $webidf->idf("スリジャヤワルダナプラコッテ"); # high
 
 DESCRIPTION
-    Lingua::JA::WebIDF calculates WebIDF scores.
+    Lingua::JA::WebIDF calculates WebIDF weight.
 
-    WebIDF(Inverse Document Frequency) scores represent the rarity of words
-    on the Web. The WebIDF scores of rare words are high. Conversely, the
-    WebIDF scores of common words are low.
+    WebIDF(Inverse Document Frequency) weight represents the rarity of a
+    word on the Web. The WebIDF weight of a rare word is high. Conversely,
+    the WebIDF weight of a common word is low.
 
     IDF is based on the intuition that a query term which occurs in many
     documents is not a good discriminator and should be given less weight
@@ -34,14 +29,15 @@ METHODS
       KEY                 DEFAULT VALUE
       -----------         ---------------
       idf_type            1
-      api                 'Yahoo'
+      api                 'YahooPremium'
       appid               undef
-      driver              'Storable'
-      df_file             undef
-      fetch_df            1
+      driver              'TokyoCabinet'
+      df_file             './df.tch'
+      fetch_df            0
       expires_in          365
       documents           250_0000_0000
       Furl_HTTP           undef
+      verbose             1
 
     idf_type => 1 || 2 || 3
         The type1 is the most commonly cited form of IDF.
@@ -56,80 +52,73 @@ METHODS
 
         The type2 is a simple version of the RSJ weight.
 
-                      N - n_i + 0.5
-          w_i = log ----------------  (2)
-                       n_i + 0.5
+                           N - n_i + 0.5
+          idf(t_i) = log ----------------  (2)
+                            n_i + 0.5
 
         The type3 is a modification of (2).
 
-                      N + 0.5
-          w_i = log -----------  (3)
-                     n_i + 0.5
+                           N + 0.5
+          idf(t_i) = log -----------  (3)
+                          n_i + 0.5
 
-    api => 'Yahoo' || 'YahooPremium' || 'Bing'
-        Uses the specified Web API when fetches WebDF(Document Frequency)
-        scores from the Web.
+    api => 'Yahoo' || 'YahooPremium'
+        Uses the specified Web API when fetches WebDF(Document Frequency).
 
     driver => 'Storable' || 'TokyoCabinet'
-        Fetches and saves WebDF scores with the specified driver.
+        Fetches and saves WebDF with the specified driver.
 
     df_file => $path
-        Saves WebDF scores to the specified path.
+        Saves WebDF to the specified path.
 
-        If undef is specified, 'yahoo_utf8.st' is used. This file is located
-        in File::ShareDir::dist_dir('Lingua-JA-WebIDF'), and contains the
-        WebDF scores of about 100000 words. There are other format files in
-        the 'share' directory of this library.
-
-        The 100000 words were fetched from the following data.
-
-        *   Noun.csv and Noun.adjv.csv in IPA dictionary
-
-        *   Japanese WordNet
+        In order to reduce access to Web API, please download a big df file
+        from <http://misc.pawafuru.com/webidf/>.
 
         I recommend that you change the file depending on the type of Web
         API you specifies because WebDF may be different depending on it.
 
     fech_df => 0
-        Doesn't fetch WebDF scores. (If 0 is specified.)
+        Never fetches WebDF from the Web if 0 is specified.
 
-        If the WebDF score you want to know is already saved, it is used.
-        Otherwise, returns undef.
+        If the WebDF you want to know has already saved, it is used. If it
+        is not so, returns undef.
 
     expires_in => $days
-        If 365 is specified, a WebDF score expires in 365 days after fetches
-        it.
+        If 365 is specified, WebDF expires in 365 days after fetches it.
 
     Furl_HTTP => \%option
         Sets the options of Furl::HTTP->new.
 
         If you want to use proxy server, you have to use this option.
 
-  idf($word)
-    Calculates the WebIDF score of $word.
+    verbose => 1 || 0
+        If 1 is specified, shows verbose error messages.
 
-    If the WebDF score of $word is not saved or is expired, fetches it by
-    using the Web API you specified and saves it.
+  idf($word)
+    Calculates the WebIDF weight of $word via df($word) method.
 
   df($word)
-    Fetches the WebDF score of $word.
+    Fetches the WebDF of $word.
 
-    If the WebDF score of $word is not saved or is expired, fetches it by
-    using the Web API you specified and saves it.
+    If the WebDF of $word has not been saved yet or has expired, fetches it
+    by using the Web API you specified and saves it.
+
+    If the WebDF of $word has expired and fetch_df is 0, the expired WebDF
+    is used.
 
   db_open($mode)
-    Opens the database file.
+    Opens the database file which is located in $path.
 
-    If you use TokyoCabinet, you have to open database file by using this
+    If you use TokyoCabinet, you have to open the database file via this
     method before idf|df|db_close|purge method is called.
 
     $mode is 'read' or 'write'.
 
   db_close
-    Closes the database file.
+    Closes the database file which is located in $path.
 
-    This method is called automatically when the object is destroyed. So,
-    you might not need to use this method explicitly.
+    This method is called automatically when the object is destroyed, so you
+    might not need to use this method explicitly.
 
   purge($expires_in)
     Purges old data in df_file.
@@ -143,8 +132,6 @@ SEE ALSO
     Lingua::JA::TFWebIDF
 
     Lingua::JA::WebIDF::Driver::TokyoTyrant
-
-    Bing API: <http://www.bing.com/toolbox/bingdeveloper/>
 
     Yahoo API: <http://developer.yahoo.co.jp/>
 

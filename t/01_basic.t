@@ -6,35 +6,131 @@ use Test::Warn;
 use Test::Fatal;
 
 
+my $df_file = './df/utf8.tch';
+
 can_ok('Lingua::JA::WebIDF', qw/new idf df db_open db_close purge/);
 
-my $exception = exception { Lingua::JA::WebIDF->new; };
-like($exception, qr/appid is needed/);
+subtest 'new method' => sub {
 
-$exception = exception { Lingua::JA::WebIDF->new(document => 1000); };
-like($exception, qr/Unknown option: document/);
+    my $exception = exception { Lingua::JA::WebIDF->new(appid => 'test'); };
+    like($exception, qr/df_file is not found/, 'not set df_file');
 
-my $webidf = Lingua::JA::WebIDF->new( appid => 'てすと' );
-$webidf    = Lingua::JA::WebIDF->new({ appid => 'てすと', fetch_df => 0, documents => 250_0000_0000 });
-isa_ok($webidf, 'Lingua::JA::WebIDF');
+    my $webidf;
+    $exception = exception { $webidf = Lingua::JA::WebIDF->new(df_file => $df_file); };
+    is($exception, undef, 'set df_file');
+    isa_ok($webidf, 'Lingua::JA::WebIDF');
 
-my $score;
+    $exception = exception { $webidf = Lingua::JA::WebIDF->new({ df_file => $df_file }); };
+    is($exception, undef, 'set a hash');
+    isa_ok($webidf, 'Lingua::JA::WebIDF');
 
-warning_is { $score = $webidf->df }
-'Undefined word has been set', 'df: undefined word';
-is($score, undef);
+    $exception = exception { Lingua::JA::WebIDF->new(df_file => $df_file, document => 250_0000_0000); };
+    like($exception, qr/Unknown option: document/, 'set an unknown option');
 
-warning_is { $score = $webidf->idf }
-'Undefined word has been set', 'idf: undefined word';
-is($score, undef);
+    $exception = exception { Lingua::JA::WebIDF->new(df_file => $df_file, appid => 'test', fetch_df => 0); };
+    is($exception, undef, "appid => 'test', fetch_df => 0");
 
-warning_is { $score = $webidf->idf(undef, 'df') }
-'Undefined df has been set', 'idf: undefined df';
-is($score, undef);
+    $exception = exception { Lingua::JA::WebIDF->new(df_file => $df_file, appid => 'test', fetch_df => 1); };
+    is($exception, undef, "appid => 'test', fetch_df => 1");
 
-isnt($webidf->df('川'),     undef, 'fetch_df from default df_file');
-is($webidf->df('川 x 100'), undef, 'fetch df from default df_file');
+    $exception = exception { Lingua::JA::WebIDF->new(df_file => $df_file, appid => undef, fetch_df => 0); };
+    is($exception, undef, "appid => undef, fetch_df => 0");
 
-is($webidf->idf(100, 'df'), log(250_0000_0000 / 100), 'calculate idf with df');
+    $exception = exception { Lingua::JA::WebIDF->new(df_file => $df_file, appid => undef, fetch_df => 1); };
+    like($exception, qr/appid is required/, "appid => undef, fetch_df => 1");
+
+    $exception = exception { Lingua::JA::WebIDF->new(df_file => $df_file, appid => 'test', fetch_df => 1, api => 'Wahoo'); };
+    unlike($exception, qr/^$/, "appid => test, fetch_df => 1, api => 'Wahoo'");
+
+    for my $idf_type (0 .. 4)
+    {
+        $exception = exception { Lingua::JA::WebIDF->new(df_file => $df_file, idf_type => $idf_type); };
+
+        if ($idf_type == 0 || $idf_type == 4)
+        {
+            like($exception, qr/Unknown idf type/, 'set a unknow idf_type');
+        }
+        else
+        {
+            is($exception, undef, 'set a correct idf_type');
+        }
+    }
+};
+
+subtest 'df method' => sub {
+
+    my $webidf = Lingua::JA::WebIDF->new(
+        df_file  => $df_file,
+        fetch_df => 0,
+    );
+
+    my $exception = exception { $webidf->df('ほげ'); };
+    like($exception, qr/not opened/, 'fetch df without opening df_file');
+
+    $webidf->db_open;
+
+    my $weight;
+
+    warning_like { $weight = $webidf->df; }
+    qr/Undefined or empty word/, 'set an undefined word';
+    is($weight, undef);
+
+    warning_like { $weight = $webidf->df(''); }
+    qr/Undefined or empty word/, 'set an empty word';
+    is($weight, undef);
+
+    isnt($webidf->df('川'), undef, "fetch df of '川' from df file");
+
+    warning_like { $weight = $webidf->idf('川' x 100); }
+    qr/use fetch_df/, "calculate idf of '川' x 100 via df file";
+    is($weight, undef, "calculate idf of '川' x 100 via df file");
+
+    $webidf->db_close;
+};
+
+subtest 'idf method' => sub {
+
+    my $num_of_documents = 250_0000_0000;
+
+    my $webidf = Lingua::JA::WebIDF->new(
+        df_file   => $df_file,
+        fetch_df  => 0,
+        documents => $num_of_documents,
+    );
+
+    my $exception = exception { $webidf->idf('ほげ'); };
+    like($exception, qr/not opened/, 'fetch idf without opening df_file');
+
+    $webidf->db_open;
+
+    my $weight;
+
+    warning_like { $weight = $webidf->idf; }
+    qr/Undefined or empty word/, 'set an undefined word';
+    is($weight, undef);
+
+    warning_like { $weight = $webidf->idf(''); }
+    qr/Undefined or empty word/, 'set an empty word';
+    is($weight, undef);
+
+    warning_like { $weight = $webidf->idf(undef, 'df'); }
+    qr/Undefined or empty df/, 'set an undefined df';
+    is($weight, undef);
+
+    warning_like { $weight = $webidf->idf('', 'df'); }
+    qr/Undefined or empty df/, 'set an empty df';
+    is($weight, undef);
+
+    isnt($webidf->idf('川'), undef, "calculate idf of '川' via df file");
+
+    warning_like { $weight = $webidf->idf('川' x 100); }
+    qr/use fetch_df/, "calculate idf of '川' x 100 via df file";
+    is($weight, undef, "calculate idf of '川' x 100 via df file");
+
+    my $df = 100;
+    is($webidf->idf($df, 'df'), log($num_of_documents / $df), 'calculate idf with the given df');
+
+    $webidf->db_close;
+};
 
 done_testing;

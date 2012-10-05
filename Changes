@@ -1,5 +1,13 @@
 Revision history for Perl extension Lingua::JA::WebIDF
 
+0.40    Wed, 03 Oct 2012 12:57:56 +0900
+        - improved tests
+        - changed default options
+        - added verbose option
+        - removed Lingua::JA::WebIDF::API::Bing
+        - removed dependency on File::Sharedir
+        - removed dependency on JSON
+
 0.32    Sat, 28 Jul 2012 17:50:26 +0900
         - removed _plugin_list function
 

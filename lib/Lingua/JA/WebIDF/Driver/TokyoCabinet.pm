@@ -42,7 +42,7 @@ sub purge
     {
         my ($df, $time) = split( /\t/, $hdb->get($key) );
 
-        if (time - $time > 60 * 60 * 24 * $days)
+        if (time - $time >= 60 * 60 * 24 * $days)
         {
             $hdb->out($key);
         }
@@ -58,7 +58,7 @@ sub db_open
 
     if (-e $self->{df_file})
     {
-        if ($mode eq 'read')
+        if (!defined $mode || $mode eq 'read')
         {
             $hdb->open($self->{df_file}, $hdb->OREADER)
                 or Carp::croak( 'TokyoCabinet' . $hdb->errmsg($hdb->ecode) );
