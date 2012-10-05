@@ -2,6 +2,8 @@ use strict;
 use warnings;
 use Lingua::JA::WebIDF;
 use Test::More;
+use Test::Requires qw/TokyoCabinet/;
+
 
 binmode Test::More->builder->$_ => ':utf8'
     for qw/output failure_output todo_output/;

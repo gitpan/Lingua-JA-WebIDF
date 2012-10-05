@@ -4,6 +4,7 @@ use Lingua::JA::WebIDF;
 use Test::More;
 use Test::Warn;
 use Test::Fatal;
+use Test::Requires qw/TokyoCabinet/;
 
 
 my $df_file = './df/utf8.tch';

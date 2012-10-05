@@ -1,5 +1,8 @@
 Revision history for Perl extension Lingua::JA::WebIDF
 
+0.41    Fri, 05 Oct 2012 22:14:59 +0900
+        - added Test::Requires qw/TokyoCabinet/
+
 0.40    Wed, 03 Oct 2012 12:57:56 +0900
         - improved tests
         - changed default options
