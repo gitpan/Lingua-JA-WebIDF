@@ -1,5 +1,8 @@
 Revision history for Perl extension Lingua::JA::WebIDF
 
+0.43    Sun, 07 Oct 2012 19:08:13 +0900
+        - fixed new method for network interface plugins
+
 0.42    Sun, 07 Oct 2012 13:17:25 +0900
         - improved tests
 

@@ -8,7 +8,8 @@ use Carp ();
 use Module::Load ();
 use Furl::HTTP;
 
-our $VERSION = '0.42';
+our $VERSION = '0.43';
+our @NETWORK_INTERFACE_PLUGIN;
 
 
 sub _options
@@ -40,12 +41,12 @@ sub new
         else                          { $options->{$key} = $args{$key};      }
     }
 
-    Carp::croak('df_file is not found')                   unless -e $options->{df_file};
-    Carp::croak('appid is required')                      if ($options->{fetch_df} && !defined $options->{appid});
-    Carp::croak("Unknown idf type: $options->{idf_type}") unless grep { $options->{idf_type} eq $_ } 1 .. 3;
-
     Module::Load::load(__PACKAGE__ . '::API::'    . $options->{api});
     Module::Load::load(__PACKAGE__ . '::Driver::' . $options->{driver});
+
+    Carp::croak('df_file is not found')                   if (! -e $options->{df_file} && !grep { $options->{driver} eq $_ } @NETWORK_INTERFACE_PLUGIN);
+    Carp::croak('appid is required')                      if ($options->{fetch_df} && !defined $options->{appid});
+    Carp::croak("Unknown idf type: $options->{idf_type}") unless grep { $options->{idf_type} eq $_ } 1 .. 3;
 
     if (defined $options->{Furl_HTTP})
     {
