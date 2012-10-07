@@ -8,7 +8,7 @@ use Carp ();
 use Module::Load ();
 use Furl::HTTP;
 
-our $VERSION = '0.41';
+our $VERSION = '0.42';
 
 
 sub _options

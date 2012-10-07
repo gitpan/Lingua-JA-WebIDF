@@ -5,11 +5,13 @@ use Lingua::JA::WebIDF;
 use Test::More;
 use Test::TCP;
 use Storable;
-use Test::Requires qw/TokyoCabinet Plack::Loader Plack::Builder Plack::Request/;
+use Test::Requires qw/Plack::Loader Plack::Builder Plack::Request/;
 
 binmode Test::More->builder->$_ => ':utf8'
     for qw/output failure_output todo_output/;
 
+
+my $IS_TOKYOCABINET_INSTALLED = eval 'use TokyoCabinet; 1;';
 
 my $PSGI_YAHOO        = './t/psgi/Yahoo.psgi';
 my $PSGI_404          = './t/psgi/404.psgi';
@@ -44,6 +46,8 @@ test_tcp(
         my $port = shift;
 
         subtest 'TokyoCabinet' => sub {
+
+            plan skip_all => 'TokyoCabinet is not installed' unless $IS_TOKYOCABINET_INSTALLED;
 
             my $webidf = Lingua::JA::WebIDF->new(
                 api      => 'Yahoo',
@@ -101,6 +105,9 @@ test_tcp(
     },
 );
 
+unlink $STORABLE_FILE;
+unlink $TOKYOCABINET_FILE;
+
 done_testing;
 
 
@@ -108,10 +115,13 @@ sub db_init
 {
     Storable::nstore({}, $STORABLE_FILE) or die $!;
 
-    my $hdb = TokyoCabinet::HDB->new;
+    if ($IS_TOKYOCABINET_INSTALLED)
+    {
+        my $hdb = TokyoCabinet::HDB->new;
 
-    $hdb->open($TOKYOCABINET_FILE, $hdb->OWRITER | $hdb->OCREAT)
-        or die $hdb->errmsg($hdb->ecode);
+        $hdb->open($TOKYOCABINET_FILE, $hdb->OWRITER | $hdb->OCREAT)
+            or die $hdb->errmsg($hdb->ecode);
 
-    $hdb->close;
+        $hdb->close;
+    }
 }

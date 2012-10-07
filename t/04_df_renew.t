@@ -7,11 +7,13 @@ use Test::Warn;
 use Test::TCP;
 use Storable;
 use Encode qw/decode_utf8/;
-use Test::Requires qw/TokyoCabinet Plack::Loader Plack::Builder Plack::Request/;
+use Test::Requires qw/Plack::Loader Plack::Builder Plack::Request/;
 
 binmode Test::More->builder->$_ => ':utf8'
     for qw/output failure_output todo_output/;
 
+
+my $IS_TOKYOCABINET_INSTALLED = eval 'use TokyoCabinet; 1;';
 
 my $PSGI_YAHOO         = './t/psgi/Yahoo.psgi';
 my $PSGI_YAHOO_PREMIUM = './t/psgi/YahooPremium.psgi';
@@ -69,133 +71,83 @@ test_tcp(
                     {
                         for my $word (@WORD)
                         {
-                            unlink $STORABLE_FILE;
-                            unlink $TOKYOCABINET_FILE;
-
-                            db_init();
-
-                            $Lingua::JA::WebIDF::API::Yahoo::BASE_URL        = "http://127.0.0.1:$port/yahoo/";
-                            $Lingua::JA::WebIDF::API::YahooPremium::BASE_URL = "http://127.0.0.1:$port/yahoo_premium/";
-
-                            my $df_file = $DF_FILE_OF{$driver};
-
-                            my %config = (
-                                api        => $api,
-                                appid      => 'test',
-                                df_file    => $df_file,
-                                driver     => $driver,
-                                fetch_df   => $fetch_df,
-                                expires_in => 30,
-                            );
-
-                            my $webidf = Lingua::JA::WebIDF->new(%config);
-
-                            $webidf->db_open('write') if $driver eq 'TokyoCabinet';
-
                             my $test_pattern
                                 = "\napi: $api\ndriver: $driver\nfetch_df: $fetch_df\nstatus_code: $status_code\nword: $word";
 
-                            if ($status_code ne $STATUS_OK)
-                            {
-                                local $Lingua::JA::WebIDF::API::Yahoo::BASE_URL        = "http://127.0.0.1:$port/$status_code/";
-                                local $Lingua::JA::WebIDF::API::YahooPremium::BASE_URL = "http://127.0.0.1:$port/$status_code/";
+                            subtest $test_pattern => sub {
 
-                                my $df;
+                                binmode Test::More->builder->$_ => ':utf8'
+                                    for qw/output failure_output todo_output/;
 
-                                if ($fetch_df)
+                                plan skip_all =>  "TokyoCabinet is not installed."
+                                    if (!$IS_TOKYOCABINET_INSTALLED && $driver eq 'TokyoCabinet');
+
+                                unlink $STORABLE_FILE;
+                                unlink $TOKYOCABINET_FILE;
+
+                                db_init();
+
+                                $Lingua::JA::WebIDF::API::Yahoo::BASE_URL        = "http://127.0.0.1:$port/yahoo/";
+                                $Lingua::JA::WebIDF::API::YahooPremium::BASE_URL = "http://127.0.0.1:$port/yahoo_premium/";
+
+                                my $df_file = $DF_FILE_OF{$driver};
+
+                                my %config = (
+                                    api        => $api,
+                                    appid      => 'test',
+                                    df_file    => $df_file,
+                                    driver     => $driver,
+                                    fetch_df   => $fetch_df,
+                                    expires_in => 30,
+                                );
+
+                                my $webidf = Lingua::JA::WebIDF->new(%config);
+
+                                $webidf->db_open('write') if $driver eq 'TokyoCabinet';
+
+                                my $test_pattern
+                                = "\napi: $api\ndriver: $driver\nfetch_df: $fetch_df\nstatus_code: $status_code\nword: $word";
+
+                                if ($status_code ne $STATUS_OK)
                                 {
-                                    if
-                                    (
-                                        $word eq $WORD[0]
-                                     || $word eq $WORD[3]
-                                     || $word eq $WORD[4]
-                                     || $word eq $WORD[5]
-                                     || $word eq $WORD[6]
-                                    )
-                                    {
-                                        warning_like { $df = $webidf->df($word); }
-                                        qr/^$api: $status_code/, $test_pattern;
-                                    }
-                                    else
-                                    {
-                                        warning_is { $df = $webidf->df($word); }
-                                        '', $test_pattern;
-                                    }
+                                    local $Lingua::JA::WebIDF::API::Yahoo::BASE_URL        = "http://127.0.0.1:$port/$status_code/";
+                                    local $Lingua::JA::WebIDF::API::YahooPremium::BASE_URL = "http://127.0.0.1:$port/$status_code/";
 
-                                }
-                                else # fetch_df: false
-                                {
-                                    if ($word eq $WORD[6])
-                                    {
-                                        warning_like { $df = $webidf->df($word); }
-                                        qr/use fetch_df/, $test_pattern;
-                                    }
-                                    else
-                                    {
-                                        warning_is { $df = $webidf->df($word); }
-                                        '', $test_pattern;
-                                    }
-                                }
-
-                                is($df, 10000, $test_pattern) if $word eq $WORD[0];
-                                is($df, 1000,  $test_pattern) if $word eq $WORD[1];
-                                is($df, 29,    $test_pattern) if $word eq $WORD[2];
-                                is($df, 30,    $test_pattern) if $word eq $WORD[3];
-                                is($df, 31,    $test_pattern) if $word eq $WORD[4];
-                                is($df, 100,   $test_pattern) if $word eq $WORD[5];
-                                is($df, undef, $test_pattern) if $word eq $WORD[6];
-                            }
-                            else # 200 ok
-                            {
-                                if ($fetch_df)
-                                {
                                     my $df;
 
-                                    if ($word eq $WORD[5])
+                                    if ($fetch_df)
                                     {
-                                        warning_like { $df = $webidf->df($word); }
-                                        qr/unavailable/, $test_pattern;
-                                    }
-                                    else
-                                    {
-                                        warning_is { $df = $webidf->df($word); }
-                                        '', $test_pattern;
-                                    }
+                                        if
+                                        (
+                                            $word eq $WORD[0]
+                                            || $word eq $WORD[3]
+                                            || $word eq $WORD[4]
+                                            || $word eq $WORD[5]
+                                            || $word eq $WORD[6]
+                                        )
+                                        {
+                                            warning_like { $df = $webidf->df($word); }
+                                            qr/^$api: $status_code/, $test_pattern;
+                                        }
+                                        else
+                                        {
+                                            warning_is { $df = $webidf->df($word); }
+                                            '', $test_pattern;
+                                        }
 
-                                    if ($api eq 'Yahoo')
-                                    {
-                                        is($df, $YAHOO_HIT, $test_pattern) if $word eq $WORD[0];
-                                        is($df, 1000,       $test_pattern) if $word eq $WORD[1];
-                                        is($df, 29,         $test_pattern) if $word eq $WORD[2];
-                                        is($df, $YAHOO_HIT, $test_pattern) if $word eq $WORD[3];
-                                        is($df, $YAHOO_HIT, $test_pattern) if $word eq $WORD[4];
-                                        is($df, 100,        $test_pattern) if $word eq $WORD[5];
-                                        is($df, 0,          $test_pattern) if $word eq $WORD[6];
                                     }
-                                    else
+                                    else # fetch_df: false
                                     {
-                                        is($df, $YAHOO_PREMIUM_HIT, $test_pattern) if $word eq $WORD[0];
-                                        is($df, 1000,               $test_pattern) if $word eq $WORD[1];
-                                        is($df, 29,                 $test_pattern) if $word eq $WORD[2];
-                                        is($df, $YAHOO_PREMIUM_HIT, $test_pattern) if $word eq $WORD[3];
-                                        is($df, $YAHOO_PREMIUM_HIT, $test_pattern) if $word eq $WORD[4];
-                                        is($df, 100,                $test_pattern) if $word eq $WORD[5];
-                                        is($df, 0,                  $test_pattern) if $word eq $WORD[6];
-                                    }
-                                }
-                                else # fetch_df: false
-                                {
-                                    my $df;
-
-                                    if ($word eq $WORD[6])
-                                    {
-                                        warning_like { $df = $webidf->df($word); }
-                                        qr/use fetch_df/, $test_pattern;
-                                    }
-                                    else
-                                    {
-                                        warning_is { $df = $webidf->df($word); }
-                                        '', $test_pattern;
+                                        if ($word eq $WORD[6])
+                                        {
+                                            warning_like { $df = $webidf->df($word); }
+                                            qr/use fetch_df/, $test_pattern;
+                                        }
+                                        else
+                                        {
+                                            warning_is { $df = $webidf->df($word); }
+                                            '', $test_pattern;
+                                        }
                                     }
 
                                     is($df, 10000, $test_pattern) if $word eq $WORD[0];
@@ -206,9 +158,71 @@ test_tcp(
                                     is($df, 100,   $test_pattern) if $word eq $WORD[5];
                                     is($df, undef, $test_pattern) if $word eq $WORD[6];
                                 }
-                            }
+                                else # 200 ok
+                                {
+                                    if ($fetch_df)
+                                    {
+                                        my $df;
 
-                            $webidf->db_close if $driver eq 'TokyoCabinet';
+                                        if ($word eq $WORD[5])
+                                        {
+                                            warning_like { $df = $webidf->df($word); }
+                                            qr/unavailable/, $test_pattern;
+                                        }
+                                        else
+                                        {
+                                            warning_is { $df = $webidf->df($word); }
+                                            '', $test_pattern;
+                                        }
+
+                                        if ($api eq 'Yahoo')
+                                        {
+                                            is($df, $YAHOO_HIT, $test_pattern) if $word eq $WORD[0];
+                                            is($df, 1000,       $test_pattern) if $word eq $WORD[1];
+                                            is($df, 29,         $test_pattern) if $word eq $WORD[2];
+                                            is($df, $YAHOO_HIT, $test_pattern) if $word eq $WORD[3];
+                                            is($df, $YAHOO_HIT, $test_pattern) if $word eq $WORD[4];
+                                            is($df, 100,        $test_pattern) if $word eq $WORD[5];
+                                            is($df, 0,          $test_pattern) if $word eq $WORD[6];
+                                        }
+                                        else
+                                        {
+                                            is($df, $YAHOO_PREMIUM_HIT, $test_pattern) if $word eq $WORD[0];
+                                            is($df, 1000,               $test_pattern) if $word eq $WORD[1];
+                                            is($df, 29,                 $test_pattern) if $word eq $WORD[2];
+                                            is($df, $YAHOO_PREMIUM_HIT, $test_pattern) if $word eq $WORD[3];
+                                            is($df, $YAHOO_PREMIUM_HIT, $test_pattern) if $word eq $WORD[4];
+                                            is($df, 100,                $test_pattern) if $word eq $WORD[5];
+                                            is($df, 0,                  $test_pattern) if $word eq $WORD[6];
+                                        }
+                                    }
+                                    else # fetch_df: false
+                                    {
+                                        my $df;
+
+                                        if ($word eq $WORD[6])
+                                        {
+                                            warning_like { $df = $webidf->df($word); }
+                                            qr/use fetch_df/, $test_pattern;
+                                        }
+                                        else
+                                        {
+                                            warning_is { $df = $webidf->df($word); }
+                                            '', $test_pattern;
+                                        }
+
+                                        is($df, 10000, $test_pattern) if $word eq $WORD[0];
+                                        is($df, 1000,  $test_pattern) if $word eq $WORD[1];
+                                        is($df, 29,    $test_pattern) if $word eq $WORD[2];
+                                        is($df, 30,    $test_pattern) if $word eq $WORD[3];
+                                        is($df, 31,    $test_pattern) if $word eq $WORD[4];
+                                        is($df, 100,   $test_pattern) if $word eq $WORD[5];
+                                        is($df, undef, $test_pattern) if $word eq $WORD[6];
+                                    }
+                                }
+
+                                $webidf->db_close if $driver eq 'TokyoCabinet';
+                            };
                         }
                     }
                 }
@@ -234,17 +248,20 @@ sub db_init
 
     Storable::nstore($df, $STORABLE_FILE) or die $!;
 
-    my $hdb = TokyoCabinet::HDB->new;
-
-    $hdb->open($TOKYOCABINET_FILE, $hdb->OWRITER | $hdb->OCREAT)
-        or die $hdb->errmsg($hdb->ecode);
-
-    for my $key (keys %{$df})
+    if ($IS_TOKYOCABINET_INSTALLED)
     {
-        $hdb->put( $key, $df->{$key} ) or die $hdb->errmsg($hdb->ecode);
-    }
+        my $hdb = TokyoCabinet::HDB->new;
 
-    $hdb->close;
+        $hdb->open($TOKYOCABINET_FILE, $hdb->OWRITER | $hdb->OCREAT)
+            or die $hdb->errmsg($hdb->ecode);
+
+        for my $key (keys %{$df})
+        {
+            $hdb->put( $key, $df->{$key} ) or die $hdb->errmsg($hdb->ecode);
+        }
+
+        $hdb->close;
+    }
 }
 
 done_testing;

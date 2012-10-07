@@ -6,11 +6,12 @@ use Test::More;
 use Test::Fatal;
 use Storable;
 use Encode qw/decode_utf8/;
-use Test::Requires qw/TokyoCabinet/;
 
 binmode Test::More->builder->$_ => ':utf8'
     for qw/output failure_output todo_output/;
 
+
+my $IS_TOKYOCABINET_INSTALLED = eval 'use TokyoCabinet; 1';
 
 my $STORABLE_FILE     = './df/idf_t.st';
 my $TOKYOCABINET_FILE = './df/idf_t.tch';
@@ -44,6 +45,8 @@ subtest 'Storable' => sub {
 };
 
 subtest 'TokyoCabinet' => sub {
+
+    plan skip_all => "TokyoCabinet is not installed." unless $IS_TOKYOCABINET_INSTALLED;
 
     my $webidf = Lingua::JA::WebIDF->new(
         driver     => 'TokyoCabinet',
@@ -96,15 +99,18 @@ sub db_init
 
     Storable::nstore(\%data, $STORABLE_FILE) or die $!;
 
-    my $hdb = TokyoCabinet::HDB->new;
-
-    $hdb->open($TOKYOCABINET_FILE, $hdb->OWRITER | $hdb->OCREAT)
-        or die $hdb->errmsg($hdb->ecode);
-
-    for my $key (keys %data)
+    if ($IS_TOKYOCABINET_INSTALLED)
     {
-        $hdb->put( $key, $data{$key} ) or die hdb->errmsg($hdb->ecode);
-    }
+        my $hdb = TokyoCabinet::HDB->new;
 
-    $hdb->close;
+        $hdb->open($TOKYOCABINET_FILE, $hdb->OWRITER | $hdb->OCREAT)
+            or die $hdb->errmsg($hdb->ecode);
+
+        for my $key (keys %data)
+        {
+            $hdb->put( $key, $data{$key} ) or die hdb->errmsg($hdb->ecode);
+        }
+
+        $hdb->close;
+    }
 }
